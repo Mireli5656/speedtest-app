@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speed Test - Network Performance Test</title>
+    <meta name="description" content="Fast and accurate internet speed test. Check your download, upload speeds and ping.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-mark">⚡</div>
+                <div>
+                    <p class="eyebrow">Network Performance</p>
+                    <h1>Speed Test</h1>
+                </div>
+            </div>
+            <button id="startTestBtn" class="primary-btn" type="button">Go</button>
+        </header>
+
+        <main class="dashboard">
+            <section class="panel meter-panel">
+                <div class="server-chip">
+                    <span class="dot"></span>
+                    <span id="selectedServerText">Auto-detecting nearest server…</span>
+                </div>
+
+                <div class="gauge-wrap">
+                    <div class="gauge-ring">
+                        <div class="gauge-inner">
+                            <div class="needle-wrap">
+                                <div id="needle" class="needle"></div>
+                            </div>
+                            <div class="gauge-center">
+                                <span class="score-label">Mbps</span>
+                                <strong id="speedValue">0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <label>Ping</label>
+                        <strong id="pingValue">0 ms</strong>
+                    </div>
+                    <div class="metric-box">
+                        <label>Download</label>
+                        <strong id="downloadValue">0 Mbps</strong>
+                    </div>
+                    <div class="metric-box">
+                        <label>Upload</label>
+                        <strong id="uploadValue">0 Mbps</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel chart-panel">
+                <div class="panel-header">
+                    <h2>Realtime Speed Graph</h2>
+                    <span id="liveStatus" class="status-badge">Idle</span>
+                </div>
+                <canvas id="speedChart" width="720" height="260"></canvas>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Speed Test • Accurate & Fast • No registration required</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
