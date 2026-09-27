@@ -1,199 +1,371 @@
-(() => {
-  'use strict';
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-  const startBtn = document.getElementById('startTestBtn');
-  const speedValue = document.getElementById('speedValue');
-  const pingValue = document.getElementById('pingValue');
-  const downloadValue = document.getElementById('downloadValue');
-  const uploadValue = document.getElementById('uploadValue');
-  const selectedServerText = document.getElementById('selectedServerText');
-  const liveStatus = document.getElementById('liveStatus');
-  const needle = document.getElementById('needle');
-  const canvas = document.getElementById('speedChart');
+:root {
+  --bg: #0a0e1a;
+  --line: rgba(255,255,255,0.08);
+  --text: #edf2ff;
+  --muted: #a7b1d1;
+  --primary: #79e7ff;
+  --cyan: #53d6ff;
+  --green: #5ef29d;
+  --purple: #7a74ff;
+  --shadow: 0 18px 48px rgba(5, 10, 20, 0.45);
+}
 
-  if (!startBtn || !canvas) {
-    console.error('Speed Test: required HTML elements are missing.');
-    return;
+html, body {
+  width: 100%;
+  min-height: 100%;
+  font-family: "Inter", sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(80,170,255,0.18), transparent 25%),
+    radial-gradient(circle at bottom right, rgba(122,116,255,0.12), transparent 30%),
+    var(--bg);
+  color: var(--text);
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 18px;
+}
+
+.app-shell {
+  width: 100%;
+  max-width: 1200px;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: rgba(11, 14, 22, 0.84);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--line);
+  gap: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-mark {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 1.35rem;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  box-shadow: 0 14px 28px rgba(83,214,255,0.32);
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  font-weight: 800;
+}
+
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  min-height: 46px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--green), var(--cyan));
+  color: #031722;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(94,242,157,0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 20;
+}
+
+.primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(94,242,157,0.32);
+}
+
+.primary-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 18px;
+  padding: 20px;
+}
+
+.panel {
+  background: linear-gradient(180deg, rgba(18,22,34,0.94), rgba(13,17,27,0.96));
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 22px;
+}
+
+.meter-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+}
+
+.server-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 12px rgba(94,242,157,0.8);
+}
+
+.gauge-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.gauge-ring {
+  position: relative;
+  width: min(360px, 85vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(
+    from 220deg,
+    rgba(93,243,160,0.95) 0deg,
+    rgba(83,214,255,0.9) 150deg,
+    rgba(123,116,255,0.8) 220deg,
+    rgba(255,255,255,0.08) 225deg,
+    rgba(255,255,255,0.06) 360deg
+  );
+  box-shadow: inset 0 0 30px rgba(20,30,65,0.5), 0 20px 40px rgba(4,8,20,0.45);
+}
+
+.gauge-ring::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  background: rgba(9,13,18,0.9);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.gauge-inner {
+  position: relative;
+  width: 72%;
+  height: 72%;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+
+.needle-wrap {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.needle {
+  position: absolute;
+  width: 6px;
+  height: 38%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff, rgba(255,255,255,0.2));
+  transform-origin: center bottom;
+  bottom: 50%;
+  left: 50%;
+  transform: translateX(-50%) rotate(-120deg);
+  transition: transform 1.2s cubic-bezier(0.2, 0.65, 0.18, 1);
+  box-shadow: 0 0 20px rgba(255,255,255,0.4);
+}
+
+.needle::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 0 20px rgba(121,231,255,0.85);
+}
+
+.gauge-center {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: rgba(6,10,18,0.82);
+  border: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 2;
+}
+
+.score-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+#speedValue {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1;
+  margin-top: 6px;
+}
+
+.metrics-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.metric-box {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 14px 10px;
+  text-align: center;
+}
+
+.metric-box label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.metric-box strong {
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  font-weight: 700;
+}
+
+.chart-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 500px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.status-badge {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+#speedChart {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  background: linear-gradient(180deg, rgba(8,12,18,0.72), rgba(19,24,36,0.08));
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.app-footer {
+  padding: 16px 24px;
+  text-align: center;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 1024px) {
+  .dashboard { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
   }
 
-  const ctx = canvas.getContext('2d');
-  const samples = [];
-  let running = false;
-
-  // Cloudflare endpoints are used only for latency selection.
-  const servers = [
-    { name: 'Cloudflare Speed', url: 'https://speed.cloudflare.com' },
-    { name: 'Cloudflare', url: 'https://www.cloudflare.com' },
-    { name: 'Cloudflare CDN', url: 'https://cdnjs.cloudflare.com' }
-  ];
-
-  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-
-  function status(text) {
-    liveStatus.textContent = text;
+  .brand {
+    flex-direction: column;
+    gap: 10px;
   }
 
-  function updateGauge(mbps) {
-    const rotation = -120 + clamp(mbps / 220, 0, 1) * 240;
-    needle.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
-    speedValue.textContent = Number.isFinite(mbps) ? mbps.toFixed(1) : '0';
+  .primary-btn {
+    width: 100%;
   }
 
-  function addSample(value) {
-    samples.push(value);
-    if (samples.length > 32) samples.shift();
-    drawChart();
+  .metrics-grid {
+    grid-template-columns: 1fr;
   }
 
-  function drawChart() {
-    const width = canvas.width;
-    const height = canvas.height;
-    ctx.clearRect(0, 0, width, height);
-
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, 'rgba(83, 214, 255, .14)');
-    gradient.addColorStop(1, 'rgba(122, 116, 255, .02)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-
-    ctx.strokeStyle = 'rgba(255,255,255,.08)';
-    ctx.lineWidth = 1;
-    for (let row = 0; row <= 4; row += 1) {
-      const y = (height / 4) * row;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
-    }
-
-    if (samples.length < 2) return;
-
-    const maximum = Math.max(200, ...samples);
-    ctx.beginPath();
-    samples.forEach((value, index) => {
-      const x = (index / (samples.length - 1)) * width;
-      const y = height - (value / maximum) * (height - 20) - 10;
-      index === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.strokeStyle = '#79e7ff';
-    ctx.lineWidth = 3;
-    ctx.shadowColor = 'rgba(121,231,255,.6)';
-    ctx.shadowBlur = 14;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
+  .gauge-ring {
+    width: min(300px, 90vw);
   }
-
-  async function latency(server) {
-    const started = performance.now();
-    try {
-      await fetch(`${server.url}/cdn-cgi/trace?speedtest=${Date.now()}`, {
-        mode: 'no-cors',
-        cache: 'no-store'
-      });
-      return performance.now() - started;
-    } catch {
-      return Number.POSITIVE_INFINITY;
-    }
-  }
-
-  async function selectServer() {
-    const results = await Promise.all(
-      servers.map(async (server) => ({ ...server, ms: await latency(server) }))
-    );
-    const selected = results.sort((a, b) => a.ms - b.ms)[0] || servers[0];
-    const displayMs = Number.isFinite(selected.ms) ? ` (${Math.round(selected.ms)} ms)` : '';
-    selectedServerText.textContent = `${selected.name}${displayMs}`;
-    return selected;
-  }
-
-  async function measurePing(server) {
-    const values = [];
-    for (let i = 0; i < 5; i += 1) {
-      const ms = await latency(server);
-      if (Number.isFinite(ms)) values.push(ms);
-      await sleep(80);
-    }
-    const result = values.length
-      ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
-      : 0;
-    pingValue.textContent = `${result} ms`;
-    return result;
-  }
-
-  async function measureDownload() {
-    // Cloudflare's documented speed endpoint. A cache-busting query avoids cached data.
-    const bytes = 10 * 1024 * 1024;
-    const started = performance.now();
-    const response = await fetch(`https://speed.cloudflare.com/__down?bytes=${bytes}&t=${Date.now()}`, {
-      cache: 'no-store'
-    });
-    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-    const data = await response.arrayBuffer();
-    const seconds = (performance.now() - started) / 1000;
-    const mbps = (data.byteLength * 8) / seconds / 1e6;
-    downloadValue.textContent = `${mbps.toFixed(1)} Mbps`;
-    addSample(mbps);
-    return mbps;
-  }
-
-  async function measureUpload() {
-    const bytes = 5 * 1024 * 1024;
-    const payload = new Uint8Array(bytes);
-    crypto.getRandomValues(payload.subarray(0, Math.min(payload.length, 65536)));
-    const body = new Blob([payload], { type: 'application/octet-stream' });
-    const started = performance.now();
-    const response = await fetch(`https://speed.cloudflare.com/__up?t=${Date.now()}`, {
-      method: 'POST',
-      body,
-      cache: 'no-store'
-    });
-    if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
-    await response.arrayBuffer();
-    const seconds = (performance.now() - started) / 1000;
-    const mbps = (bytes * 8) / seconds / 1e6;
-    uploadValue.textContent = `${mbps.toFixed(1)} Mbps`;
-    addSample(mbps);
-    return mbps;
-  }
-
-  async function runSpeedTest() {
-    if (running) return;
-    running = true;
-    startBtn.disabled = true;
-    startBtn.textContent = 'Testing…';
-    samples.length = 0;
-    drawChart();
-    updateGauge(0);
-
-    try {
-      status('Finding server…');
-      const server = await selectServer();
-      status('Measuring ping…');
-      await measurePing(server);
-      status('Testing download…');
-      const download = await measureDownload();
-      status('Testing upload…');
-      const upload = await measureUpload();
-      updateGauge((download + upload) / 2);
-      status('Complete');
-    } catch (error) {
-      console.error('Speed test failed:', error);
-      status('Test failed');
-      selectedServerText.textContent = 'Cloudflare test unavailable';
-      pingValue.textContent = 'N/A';
-      downloadValue.textContent = 'N/A';
-      uploadValue.textContent = 'N/A';
-      updateGauge(0);
-    } finally {
-      running = false;
-      startBtn.disabled = false;
-      startBtn.textContent = 'Go';
-    }
-  }
-
-  startBtn.addEventListener('click', runSpeedTest);
-  updateGauge(0);
-  status('Idle');
-  for (let i = 0; i < 10; i += 1) addSample(0);
-})();
+}
