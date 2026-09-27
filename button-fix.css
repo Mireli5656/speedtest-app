@@ -1,0 +1,17 @@
+/* Ensure the main action is always visible and clickable. */
+.topbar {
+    position: relative;
+    z-index: 10;
+}
+
+.primary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 92px;
+    min-height: 46px;
+    visibility: visible;
+    opacity: 1;
+    position: relative;
+    z-index: 20;
+}
