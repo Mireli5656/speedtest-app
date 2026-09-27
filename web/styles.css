@@ -1,74 +1,381 @@
-<!DOCTYPE html>
-<html lang="az">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Internet Speed Test</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <div class="app-shell">
-      <header class="topbar">
-        <div class="brand">
-          <div class="brand-mark">S</div>
-          <div>
-            <p class="eyebrow">Network Performance</p>
-            <h1>Speed Test</h1>
-          </div>
-        </div>
-        <button id="startTestBtn" class="primary-btn">Go</button>
-      </header>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-      <main class="dashboard">
-        <section class="panel meter-panel">
-          <div class="server-chip">
-            <span class="dot"></span>
-            <span id="selectedServerText">Auto-detecting nearest Cloudflare server…</span>
-          </div>
+:root {
+  --bg: #090d17;
+  --panel: rgba(18, 22, 34, 0.96);
+  --line: rgba(255, 255, 255, 0.08);
+  --text: #edf2ff;
+  --muted: #a7b1d1;
+  --primary: #79e7ff;
+  --cyan: #53d6ff;
+  --green: #5ef29d;
+  --purple: #7a74ff;
+  --shadow: 0 18px 48px rgba(4, 9, 20, 0.52);
+}
 
-          <div class="gauge-wrap">
-            <div class="gauge-ring">
-              <div class="gauge-inner">
-                <div class="needle-wrap">
-                  <div id="needle" class="needle"></div>
-                </div>
-                <div class="gauge-center">
-                  <span class="score-label">Mbps</span>
-                  <strong id="speedValue">0</strong>
-                </div>
-              </div>
-            </div>
-          </div>
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(80, 170, 255, 0.14), transparent 25%),
+    radial-gradient(circle at bottom right, rgba(122, 116, 255, 0.14), transparent 28%),
+    var(--bg);
+  color: var(--text);
+}
 
-          <div class="metrics-grid">
-            <div class="metric-box">
-              <label>Ping</label>
-              <strong id="pingValue">0 ms</strong>
-            </div>
-            <div class="metric-box">
-              <label>Download</label>
-              <strong id="downloadValue">0 Mbps</strong>
-            </div>
-            <div class="metric-box">
-              <label>Upload</label>
-              <strong id="uploadValue">0 Mbps</strong>
-            </div>
-          </div>
-        </section>
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 18px;
+}
 
-        <section class="panel chart-panel">
-          <div class="panel-header">
-            <h2>Realtime Speed</h2>
-            <span id="liveStatus">Idle</span>
-          </div>
-          <canvas id="speedChart" width="720" height="260"></canvas>
-        </section>
-      </main>
-    </div>
+.app-shell {
+  width: min(1200px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: rgba(11, 14, 22, 0.82);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+}
 
-    <script src="/app.js"></script>
-  </body>
-</html>
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 30px;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-mark {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  box-shadow: 0 14px 28px rgba(83, 214, 255, 0.3);
+  font-size: 1.35rem;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: clamp(1.2rem, 4vw, 1.9rem);
+  font-weight: 800;
+}
+
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  min-height: 46px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--green), var(--cyan));
+  color: #031722;
+  font-weight: 800;
+  font-size: 1.05rem;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(94, 242, 157, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.primary-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(94, 242, 157, 0.34);
+}
+
+.primary-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.primary-btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 18px;
+  padding: 20px;
+}
+
+.panel {
+  background: linear-gradient(180deg, rgba(18, 22, 34, 0.94), rgba(13, 17, 27, 0.96));
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 22px;
+}
+
+.meter-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+}
+
+.server-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 12px rgba(94, 242, 157, 0.8);
+}
+
+.gauge-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.gauge-ring {
+  position: relative;
+  width: min(360px, 85vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(
+    from 220deg,
+    rgba(93, 243, 160, 0.95) 0deg,
+    rgba(83, 214, 255, 0.9) 150deg,
+    rgba(123, 116, 255, 0.8) 220deg,
+    rgba(255, 255, 255, 0.08) 225deg,
+    rgba(255, 255, 255, 0.06) 360deg
+  );
+  box-shadow: inset 0 0 30px rgba(20, 30, 65, 0.5), 0 20px 40px rgba(4, 8, 20, 0.45);
+}
+
+.gauge-ring::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  background: rgba(9, 13, 18, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.gauge-inner {
+  position: relative;
+  width: 72%;
+  height: 72%;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+
+.needle-wrap {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.needle {
+  position: absolute;
+  width: 6px;
+  height: 38%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff, rgba(255, 255, 255, 0.2));
+  transform-origin: center bottom;
+  bottom: 50%;
+  left: 50%;
+  transform: translateX(-50%) rotate(-120deg);
+  transition: transform 1.2s cubic-bezier(0.2, 0.65, 0.18, 1);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+}
+
+.needle::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 0 20px rgba(121, 231, 255, 0.85);
+}
+
+.gauge-center {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: rgba(6, 10, 18, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 2;
+}
+
+.score-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+#speedValue {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1;
+  margin-top: 6px;
+  font-weight: 800;
+}
+
+.metrics-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.metric-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 14px 10px;
+  text-align: center;
+}
+
+.metric-box label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.metric-box strong {
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  font-weight: 700;
+}
+
+.chart-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 500px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.status-badge {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+#speedChart {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  background: linear-gradient(180deg, rgba(8, 12, 18, 0.72), rgba(19, 24, 36, 0.08));
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.app-footer {
+  padding: 16px 24px;
+  text-align: center;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 1024px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    flex-direction: column;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .brand {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .primary-btn {
+    width: 100%;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gauge-ring {
+    width: min(300px, 90vw);
+  }
+}
